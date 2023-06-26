@@ -4,7 +4,7 @@ from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from . import keyboards
 from config import bot, ADMINs
-
+from database.bot_db import sql_command_insert
 
 
 
@@ -26,9 +26,6 @@ async def fsm_start(message: types.Message):
 
 async def load_name(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
-        data['id'] = message.from_user.id
-        data['username'] = f"@{message.from_user.username}" \
-            if message.from_user.username else None
         data['name'] = message.text
     await FSM_mentors.next()
     await message.answer("Какое направление у Ментора?", reply_markup=keyboards.direction_markup)
@@ -66,6 +63,7 @@ async def load_group(message: types.Message, state: FSMContext):
 async def submit(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         if message.text.lower() == 'да':
+            await sql_command_insert(state)
             await message.answer(f"Информация о менторе: \nИмя: {data['name']};"
                                  f" \nНаправление: {data['direction']} разработчик; \nВозраст: {data['age']}; \nГруппа: {data['group']}.")
             await state.finish()
